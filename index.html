@@ -155,11 +155,17 @@ let cycleCount = 0;
 let duration = 0;
 let timer = null;
 let running = false;
+let audioContext = null;
 
 function beep() {
 
-    const audioContext =
-        new (window.AudioContext || window.webkitAudioContext)();
+    if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    }
+
+    if (audioContext.state === 'suspended') {
+        audioContext.resume().catch(() => {});
+    }
 
     const oscillator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();
@@ -170,11 +176,13 @@ function beep() {
     oscillator.frequency.value = 1000;
     oscillator.type = "sine";
 
+    gainNode.gain.setValueAtTime(1, audioContext.currentTime);
+
     oscillator.start();
 
     gainNode.gain.exponentialRampToValueAtTime(
         0.0001,
-        audioContext.currentTime + 0.1 // change 0.15 to 0.1
+        audioContext.currentTime + 0.15
     );
 
     oscillator.stop(audioContext.currentTime + 0.15);
@@ -224,6 +232,13 @@ function startCounter(){
 
     running = true;
 
+    if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioContext.state === 'suspended') {
+        audioContext.resume().catch(() => {});
+    }
+
     document.getElementById("status").innerText =
         "Running";
 
@@ -236,7 +251,7 @@ function runCycle(){
 
     document.getElementById("countdown").innerText =
         current;
-        beep(); // beep at the start of cycle
+
     timer = setInterval(() => {
 
         beep();
@@ -283,6 +298,10 @@ function stopCounter(){
         "Stopped";
 
     window.speechSynthesis.cancel();
+
+    if (audioContext && audioContext.state === 'running') {
+        audioContext.suspend().catch(() => {});
+    }
 }
 
 function resetCycle(){
@@ -303,6 +322,10 @@ function resetCycle(){
     window.speechSynthesis.cancel();
 
     speak("Reset Complete");
+
+    if (audioContext && audioContext.state === 'running') {
+        audioContext.suspend().catch(() => {});
+    }
 }
 
 </script>

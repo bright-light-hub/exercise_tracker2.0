@@ -174,7 +174,7 @@ function beep() {
 
     gainNode.gain.exponentialRampToValueAtTime(
         0.0001,
-        audioContext.currentTime + 0.15
+        audioContext.currentTime + 0.1 // change 0.15 to 0.1
     );
 
     oscillator.stop(audioContext.currentTime + 0.15);
@@ -236,7 +236,7 @@ function runCycle(){
 
     document.getElementById("countdown").innerText =
         current;
-
+        beep(); // beep at the start of cycle
     timer = setInterval(() => {
 
         beep();

@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Exercise Cycle Counter</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial,sans-serif;
+}
+
+body{
+    background:#f4f6f9;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:20px;
+}
+
+.container{
+    width:100%;
+    max-width:420px;
+    background:#fff;
+    padding:25px;
+    border-radius:20px;
+    box-shadow:0 5px 20px rgba(0,0,0,0.1);
+    text-align:center;
+}
+
+h1{
+    color:#333;
+    margin-bottom:20px;
+}
+
+input{
+    width:100%;
+    padding:14px;
+    border:2px solid #ddd;
+    border-radius:10px;
+    font-size:18px;
+    margin-bottom:15px;
+}
+
+.btn-group{
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    gap:10px;
+    margin-bottom:20px;
+}
+
+button{
+    padding:14px;
+    border:none;
+    border-radius:10px;
+    font-size:15px;
+    cursor:pointer;
+    color:white;
+    font-weight:bold;
+}
+
+.start{
+    background:#28a745;
+}
+
+.stop{
+    background:#dc3545;
+}
+
+.reset{
+    background:#ff9800;
+}
+
+.counter{
+    font-size:90px;
+    font-weight:bold;
+    color:#007bff;
+    margin:20px 0;
+}
+
+.cycle{
+    font-size:24px;
+    color:#444;
+    margin-bottom:10px;
+}
+
+.status{
+    font-size:18px;
+    color:#666;
+}
+
+@media(max-width:480px){
+
+    .counter{
+        font-size:70px;
+    }
+
+    .btn-group{
+        grid-template-columns:1fr;
+    }
+
+    button{
+        width:100%;
+    }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+    <h1>Exercise Counter</h1>
+
+    <input
+        type="number"
+        id="seconds"
+        placeholder="Enter seconds (Example: 5)"
+        min="1"
+    >
+
+    <div class="btn-group">
+        <button class="start" onclick="startCounter()">
+            Start
+        </button>
+
+        <button class="stop" onclick="stopCounter()">
+            Stop
+        </button>
+
+        <button class="reset" onclick="resetCycle()">
+            Reset
+        </button>
+    </div>
+
+    <div class="counter" id="countdown">0</div>
+
+    <div class="cycle">
+        Cycle: <span id="cycle">0</span>
+    </div>
+
+    <div class="status" id="status">
+        Waiting...
+    </div>
+
+</div>
+
+<script>
+
+let cycleCount = 0;
+let duration = 0;
+let timer = null;
+let running = false;
+
+function beep() {
+
+    const audioContext =
+        new (window.AudioContext || window.webkitAudioContext)();
+
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    oscillator.frequency.value = 1000;
+    oscillator.type = "sine";
+
+    oscillator.start();
+
+    gainNode.gain.exponentialRampToValueAtTime(
+        0.0001,
+        audioContext.currentTime + 0.15
+    );
+
+    oscillator.stop(audioContext.currentTime + 0.15);
+}
+
+function numberToWord(num){
+
+    const words = [
+        "Zero","One","Two","Three","Four",
+        "Five","Six","Seven","Eight","Nine",
+        "Ten","Eleven","Twelve","Thirteen",
+        "Fourteen","Fifteen","Sixteen",
+        "Seventeen","Eighteen","Nineteen",
+        "Twenty"
+    ];
+
+    return words[num] || num.toString();
+}
+
+function speak(text){
+
+    window.speechSynthesis.cancel();
+
+    const speech = new SpeechSynthesisUtterance(text);
+
+    speech.rate = 1;
+    speech.pitch = 1;
+    speech.volume = 1;
+
+    window.speechSynthesis.speak(speech);
+}
+
+function startCounter(){
+
+    if(running){
+        return;
+    }
+
+    duration = parseInt(
+        document.getElementById("seconds").value
+    );
+
+    if(!duration || duration <= 0){
+        alert("Please enter valid seconds.");
+        return;
+    }
+
+    running = true;
+
+    document.getElementById("status").innerText =
+        "Running";
+
+    runCycle();
+}
+
+function runCycle(){
+
+    let current = duration;
+
+    document.getElementById("countdown").innerText =
+        current;
+
+    timer = setInterval(() => {
+
+        beep();
+
+        current--;
+
+        document.getElementById("countdown").innerText =
+            current;
+
+        if(current <= 0){
+
+            clearInterval(timer);
+
+            cycleCount++;
+
+            document.getElementById("cycle").innerText =
+                cycleCount;
+
+            document.getElementById("status").innerText =
+                "Cycle " + cycleCount + " Completed";
+
+            speak(numberToWord(cycleCount));
+
+            if(running){
+
+                setTimeout(() => {
+
+                    runCycle();
+
+                },1000);
+            }
+        }
+
+    },1000);
+}
+
+function stopCounter(){
+
+    running = false;
+
+    clearInterval(timer);
+
+    document.getElementById("status").innerText =
+        "Stopped";
+
+    window.speechSynthesis.cancel();
+}
+
+function resetCycle(){
+
+    running = false;
+
+    clearInterval(timer);
+
+    cycleCount = 0;
+
+    document.getElementById("cycle").innerText = 0;
+
+    document.getElementById("countdown").innerText = 0;
+
+    document.getElementById("status").innerText =
+        "Reset Complete";
+
+    window.speechSynthesis.cancel();
+
+    speak("Reset Complete");
+}
+
+</script>
+
+</body>
+</html>
